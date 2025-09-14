@@ -1,0 +1,171 @@
+
+#include <iostream>
+#include "TicTacToe.h"
+#include "input.h"
+#include <ctime>
+#include <vector>
+#include <limits>
+
+using namespace std;
+int menuOption();
+void mainTicTacToe();
+
+
+int main()
+{
+    do
+    {
+        switch (menuOption())
+        {
+        case 0 : exit(0); break;
+        case 1 : mainTicTacToe(); break;
+      //  case '2': towerofHanoi();; break;
+      //  case '3': n-queens(); break;
+
+        default: cout << "\t\tERROR - Invalid option. Please re-enter."; break;
+        }
+        cout << "\n";
+        system("pause");
+    } while (true);
+    return EXIT_SUCCESS;
+
+}
+
+int menuOption()
+{
+    system("cls");
+    cout << "\n\t CMPR131 Chapter 3 - Games Applications using Container by Daisy Ramon";
+    cout << "\n\t" << string(105, char(205));
+    cout << "\n\t1> Tic-Tac-Toe";
+    cout << "\n\t2> Tower of Hanoi";
+    cout << "\n\t3> n-Queens";
+    cout << "\n\t" << string(105, char(196));
+    cout << "\n\t0.Exit";
+    cout << "\n\t" << string(105, char(205));
+    return inputInteger("\n\tOption: ", 0,3);
+}
+
+
+
+// Ask user if they want to play again if y, true n, false 
+bool askPlayAgain() {
+    char choice = inputChar("Do you want to play again? (Y/N): ", "YN");
+    return choice == 'Y';
+}
+
+void mainTicTacToe() {
+    //initializing for time segment 
+    int totalGames = 0;
+    int fastestTime = INT_MAX;
+    int slowestTime = 0;
+    int fastestMoves = 0;
+    int slowestMoves = 0;
+    int totalTime = 0;
+    // print outside of loop to avoid repition 
+    system ("cls");
+    cout << "\n\tTic-tac-toe (also known as Noughts and crosses or Xs and Os) is a game for two";
+    cout << "\n\tplayers, X and O, who take turns marking the spaces in a 3x3 grid.The player who";
+    cout << "\n\tsucceeds in placing three of their marks in a horizontal, vertical, or diagonal";
+    cout << "\n\trow wins the game  ";
+    cout << "\n\tThis tic-tac-toe program plays against the computer. Human player, X, will always ";
+    cout << "\n\tfirst.Time will be recorded for the fastest and the slowest game. Average time will";
+    cout << "\n\tthen be calculated and displayed.";
+    cout << "\n ";
+    cout << " \n";
+    cout << " \n";
+
+
+    bool playing = true;
+
+    // loop for game runs as long as playing returns as true 
+    while (playing) {
+
+        TicTacToe game;
+        int moveCount = 0; 
+
+        time_t start = time(0); // start time 
+        game.printBoard(); // print board 
+        bool gameOver = false;
+
+        while (!gameOver) {
+
+
+            int row = inputInteger("\n\tEnter the board's row # (1..3) or 0 to forfeit: ", 0, 3);
+            if (row == 0) {
+                cout << "\n\tYou forfeited. Computer wins!\n";
+                break;
+            }
+            int col = inputInteger("\n\tEnter the board's column # (1..3): ", 1, 3);
+           
+            bool validMove = game.move(row - 1, col - 1, game.getPlayerSymbol());
+            if (!validMove) {
+                cout << "\n\tInvalid move. Try again.\n";
+                continue;
+            }
+
+            ++moveCount; // add to move count (player)
+            // print players move 
+            cout << "\n\tYour move :";
+            game.printBoard();
+
+            // checks if player one 
+            if (game.win(game.getPlayerSymbol())) {
+                cout << "\n\tYou win!\n";
+                break;
+            }
+            // checks if its a  draw 
+            if (game.isBoardFull()) {
+                cout << "\n\tIt's a draw!\n";
+                break;
+            }
+
+            game.computerTurn();
+            ++moveCount; // add to move count (computer)
+            //print computers move 
+            cout << "\n\tComputer move : ";
+            game.printBoard();
+
+            // checks if computer one 
+            if (game.win(game.getComputerSymbol())) {
+                cout << "\n\tComputer wins!\n";
+                break;
+            }
+            // checks if a draw
+            if (game.isBoardFull()) {
+                cout << "\n\tIt's a draw!\n";
+                break;
+            }
+        }
+
+        // end timer 
+        time_t end = time(0);
+        int duration = static_cast<int>(end - start);
+        totalTime += duration;
+
+        // add to game total 
+        ++totalGames;
+
+        // compare for fastest time and set move count 
+        if (duration < fastestTime) {
+            fastestTime = duration;
+            fastestMoves = moveCount;
+        }
+        // compare for slowest time and set move count 
+        if (duration > slowestTime) {
+            slowestTime = duration;
+            slowestMoves = moveCount;
+        }
+
+        playing = askPlayAgain();
+    }
+
+    if (totalGames > 0) {
+        cout << "\nSummary:\n";
+        cout << totalGames << " game(s) of Tic-Tac-Toe were played.\n";
+        cout << "\n\tThe fastest time was " << fastestTime << " seconds in " << fastestMoves << " moves.";
+        cout << "\n\tThe slowest time was " << slowestTime << " seconds in " << slowestMoves << " moves.";
+        cout << "\n\tThe average time was " << static_cast<double>(totalTime) / totalGames << " second(s).";
+    }
+
+    system("pause");
+}
