@@ -11,22 +11,42 @@ TicTacToe::TicTacToe() {
 
 // prints board 2d array 3x3 size is set as a const in .h
 void TicTacToe::printBoard() const {
+    char vertical = char(186); 
+    char horizontal = char(205); 
     cout << "\n";
-    for (int i = 0; i < SIZE; ++i) {
-        cout << string(30, ' ');  // 30 spaces indentation
-        for (int j = 0; j < SIZE; ++j) {
-            cout << " " << board[i][j] << " ";
-            if (j < SIZE - 1) cout << "|";
-        }
-        cout << "\n";
+    // Top border
+    cout << string(30, ' ');
+    cout << char(201)                         
+        << string(3, horizontal) << char(203) 
+        << string(3, horizontal) << char(203)
+        << string(3, horizontal) << char(187) << "\n"; 
 
+    for (int i = 0; i < SIZE; ++i) {
+        // Board row with pieces
+        cout << string(30, ' ');
+        for (int j = 0; j < SIZE; ++j) {
+            cout << vertical << " " << board[i][j] << " ";
+        }
+        cout << vertical << "\n";
+
+        // Row separators
         if (i < SIZE - 1) {
-            cout << string(30, ' '); 
-            cout << "---+---+---\n";
+            cout << string(30, ' ');
+            cout << char(204)                         
+                << string(3, horizontal) << char(206) 
+                << string(3, horizontal) << char(206)
+                << string(3, horizontal) << char(185) << "\n";
         }
     }
-    cout << "\n";
+
+    // Bottom border
+    cout << string(30, ' ');
+    cout << char(200)                         
+        << string(3, horizontal) << char(202) 
+        << string(3, horizontal) << char(202)
+        << string(3, horizontal) << char(188) << "\n"; 
 }
+
 
 //spaces set to blank 
 void TicTacToe::resetBoard() {
@@ -101,7 +121,6 @@ void TicTacToe::computerTurn() {
                 board[i][j] = computer;
                 return;
             }
-
     printBoard();
 
 }
