@@ -1,26 +1,59 @@
 #include "QueensGame.h"
 #include <iostream>
+#include<string>
 using namespace std;
 
 // Constructor
 QueensGame::QueensGame(int size) : N(size), placed(0), board(size, vector<int>(size, 0)) {}
 
-// Print the board
-void QueensGame::printBoard() const 
+// Print the board with ASCII borders
+void QueensGame::printBoard() const
 {
-    cout << "\n\t   ";
-    for (int j = 1; j <= N; j++) cout << j << " ";
-    cout << endl;
-    for (int i = 0; i < N; i++) 
+    cout << "\n";
+
+    // Top border
+    cout << "\t  " << char(201); // ┌
+    for (int j = 0; j < N; j++)
     {
-        cout << "\t" << i + 1 << " |";
+        cout << char(205) << char(205); // ──
+        if (j < N - 1) cout << char(203); // ┬
+    }
+    cout << char(187) << "\n"; // ┐
+
+    // Rows
+    for (int i = 0; i < N; i++)
+    {
+        cout << "\t  " << char(186); // │
         for (int j = 0; j < N; j++)
         {
-            cout << (board[i][j] ? "Q" : ".") << " ";
+            cout << right << (board[i][j] ? "Q" : "-") << " " << char(186); // cell + │
         }
-        cout << endl;
+        cout << "\n";
+
+        // Middle or bottom border
+        if (i < N - 1)
+        {
+            cout << "\t  " << char(199); // ├
+            for (int j = 0; j < N; j++)
+            {
+                cout << char(205) << char(205); // ──
+                if (j < N - 1) cout << char(206); // ┼
+            }
+            cout << char(185) << "\n"; // ┤
+        }
+        else
+        {
+            cout << "\t  " << char(200); // └
+            for (int j = 0; j < N; j++)
+            {
+                cout << char(205) << char(205); // ──
+                if (j < N - 1) cout << char(202); // ┴
+            }
+            cout << char(188) << "\n"; // ┘
+        }
     }
 }
+
 
 // Check if a queen can be placed at (row, col)
 bool QueensGame::isSafe(int row, int col) const 
