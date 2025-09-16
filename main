@@ -8,12 +8,42 @@
 #include "QueensGame.h"
 #include <iomanip>
 #include <string>
-
+#include "Disc.h"
+#include "GameSquare.h"
+#include "Tower.h"
 using namespace std;
 
 int menuOption();
 void mainTicTacToe();
 void queensMenu();
+
+//precondition: none
+//postcondition: runs the Towers of Hanoi game loop, handles user input, tracks moves and time
+void towersOfHanoi();
+
+//precondition: choice must be 'A', 'B', or 'C'
+//postcondition: returns a reference to the tower corresponding to the choice
+Tower& getTower(char choice, Tower& towerA, Tower& towerB, Tower& towerC);
+
+//precondition: rowFromBottom >= 0, 0 <= rowFromBottom < tower.capacity()
+//postcondition: returns a string representing either an empty pole segment or a disc centered on the pole
+std::string getDiscString(const Tower& tower, int rowFromBottom, int maxDiscSize);
+
+//precondition: move must be valid according to Towers of Hanoi rules
+//postcondition: moves the top disc from src to dest, returns true if successful, false otherwise
+bool makeMove(Tower& src, Tower& dest);
+
+//precondition: none
+//postcondition: returns true if moving the top disc from src to dest is legal, false otherwise
+bool isValidMove(const Tower& src, const Tower& dest);
+
+//precondition: none
+//postcondition: prints the three towers side-by-side in their current state
+void displayTowers(const Tower& A, const Tower& B, const Tower& C);
+
+//precondition: gameTimes.size() >= 1
+//postcondition: returns the average time of all recorded games in whole seconds
+std::chrono::seconds calculateAverageTime(const DynamicArray<std::pair<std::chrono::seconds, int>>& gameTimes);
 
 
 int main()
@@ -24,8 +54,8 @@ int main()
         {
         case 0: exit(0); break;
         case 1: mainTicTacToe(); break;
-            //  case '2': towerofHanoi();; break;
-         case 3: queensMenu(); break;
+        case '2': towersOfHanoi(); break;
+        case 3: queensMenu(); break;
 
         default: cout << "\t\tERROR - Invalid option. Please re-enter."; break;
         }
@@ -285,4 +315,196 @@ void mainTicTacToe() {
     }
 
     system("pause");
+}
+
+
+
+
+
+
+std::chrono::seconds calculateAverageTime(const DynamicArray<std::pair<std::chrono::seconds, int>>& gameTimes) {
+    if (gameTimes.size() == 0) return std::chrono::seconds(0);
+
+    auto totalSeconds = 0;
+    for (int i = 0; i < gameTimes.size(); ++i) {
+        totalSeconds += gameTimes.retrieve(i).first.count();
+    }
+    return std::chrono::seconds(totalSeconds / gameTimes.size());
+}
+
+void towersOfHanoi() {
+    DynamicArray<std::pair<std::chrono::seconds, int>> gameTimes;
+    int moves = 0;
+    int num_disc = 0;
+    char moveChoice = 'A';
+    char destChoice = 'B';
+
+    cout << R"(
+    The Tower of Hanoi, also called the Tower of Brahma or Lucas' Tower, is a mathematical game.
+    It consists of three pegs and a number of rings of different sizes, which can slide onto
+    any peg. The game starts with the rings in a neat stack in ascending order of size on one
+    peg, the smallest at the top, thus making a conical shape.
+
+    The objective of the game is to move the entire stack from the starting peg - A to ending peg - B,
+    obeying the following simple rules:
+
+        1. Only one disk can be moved at a time.
+        2. Each move consists of taking the upper disk from one of the stacks and
+           placing it on top of another stack or on an empty peg.
+        3. No larger disk may be placed on top of a smaller disk.
+)" << endl;
+
+    num_disc = inputInteger("\tEnter the number of rings(1..64) to begin : ", 1, 64);
+    auto start = std::chrono::high_resolution_clock::now();
+    moves = 0;
+
+    Tower tower1(num_disc);
+    Tower tower2(num_disc);
+    Tower tower3(num_disc);
+    tower1.init();
+
+    Tower* src = nullptr;
+    Tower* dest = nullptr;
+
+    do {
+        cout << "\n\tTower of Hanoi\n\n";
+        displayTowers(tower1, tower2, tower3);
+
+        if (tower3.isFull()) {
+            cout << "\n\tWin condition fulfilled. Tower successfully moved.\n";
+            break;
+        }
+
+        moveChoice = toupper(inputChar("\tSelect the top disk from the start peg (A,B,C, or Q-quit): ", "ABCQ"));
+        if (moveChoice == 'Q') break;
+
+        destChoice = toupper(inputChar("\tSelect the end peg (A, B, C, or Q-quit): ", "ABCQ"));
+        if (destChoice == 'Q') break;
+
+        if (moveChoice == destChoice) {
+            cerr << "\n\tERROR: Cannot move to the same peg. Try again.\n\n";
+            system("pause");
+            continue;
+        }
+        else {
+            try {
+                src = &getTower(moveChoice, tower1, tower2, tower3);
+                dest = &getTower(destChoice, tower1, tower2, tower3);
+
+                if (makeMove(*src, *dest)) {
+                    ++moves;
+                    cout << "\n\tMoved disc from " << moveChoice << " to " << destChoice << endl;
+                }
+                else {
+                    cout << "\n\tInvalid move attempted.\n";
+                }
+                system("pause");
+            }
+            catch (const std::runtime_error& endgame) {
+                cout << endgame.what() << endl;
+                break;
+            }
+        }
+    } while (true);
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+
+    gameTimes.append(std::make_pair(duration, moves));
+
+    cout << "\n\tGame Over!\n";
+    cout << "\tTime elapsed: " << duration.count() << " seconds\n";
+    cout << "\tTotal moves: " << moves << endl;
+
+    // stats across all games played
+    if (gameTimes.size() > 0) {
+        // fastest = min
+        auto fastest = gameTimes.retrieve(0);
+        auto slowest = gameTimes.retrieve(0);
+
+        for (int i = 1; i < gameTimes.size(); ++i) {
+            auto cur = gameTimes.retrieve(i);
+            if (cur.first < fastest.first) fastest = cur;
+            if (cur.first > slowest.first) slowest = cur;
+        }
+
+        auto avg = calculateAverageTime(gameTimes);
+
+        cout << "\n\tThe fastest time was " << fastest.first.count() << " seconds in "
+            << fastest.second << " moves.\n";
+        cout << "\tThe slowest time was " << slowest.first.count() << " seconds in "
+            << slowest.second << " moves.\n";
+        cout << "\tThe average time was " << avg.count() << " second(s).\n";
+    }
+}
+
+
+
+std::string getDiscString(const Tower& tower, int rowFromBottom, int maxDiscSize) {
+	int towerHeight = tower.size();
+
+	if (rowFromBottom >= towerHeight) {
+		return std::string(maxDiscSize, ' ') + (char)186 + std::string(maxDiscSize, ' ');
+	}
+	else {
+		int indexFromBottom = rowFromBottom;
+		int priority = tower.peekAt(indexFromBottom).getPriority();
+
+		int pad = maxDiscSize - priority;
+		std::string leftPad(priority, (char)219);
+		std::string rightPad(priority, (char)219);
+
+		return std::string(pad, ' ')
+			+ leftPad
+			+ std::to_string(priority)
+			+ rightPad
+			+ std::string(pad, ' ');
+	}
+}
+
+void displayTowers(const Tower& A, const Tower& B, const Tower& C) {
+	int maxHeight = std::max({ A.size(), B.size(), C.size() });
+	int maxDiscSize = std::max({ A.capacity(), B.capacity(), C.capacity() });
+
+	for (int row = maxHeight - 1; row >= 0; --row) {
+		std::cout << getDiscString(A, row, maxDiscSize) << "   "
+			<< getDiscString(B, row, maxDiscSize) << "   "
+			<< getDiscString(C, row, maxDiscSize) << "\n";
+	}
+
+	std::cout << std::string(maxDiscSize * 2 + 1, (char)196) << "   "
+		<< std::string(maxDiscSize * 2 + 1, (char)196) << "   "
+		<< std::string(maxDiscSize * 2 + 1, (char)196) << "\n";
+
+	std::cout << std::setw(maxDiscSize) << "A"
+		<< std::setw(maxDiscSize * 2 + 3) << "B"
+		<< std::setw(maxDiscSize * 2 + 3) << "C" << "\n\n";
+}
+Tower& getTower(char choice, Tower& towerA, Tower& towerB, Tower& towerC) {
+	choice = toupper(choice);
+	switch (choice) {
+	case 'A':
+		return towerA;
+		break;
+	case 'B':
+		return towerB;
+		break;
+	case 'C':
+		return towerC;
+		break;
+	default:
+		throw std::runtime_error("\n\tGAME CONCLUDED.");
+	}
+}
+
+bool isValidMove(const Tower& from, const Tower& to) {
+	if (from.empty()) return false;
+	if (!to.empty() && from.peekTopPriority() > to.peekTopPriority()) return false;
+	return true;
+}
+
+bool makeMove(Tower& from, Tower& to) {
+	if (!isValidMove(from, to)) return false;
+	to.addDisc(from.removeDisk());
+	return true;
 }
