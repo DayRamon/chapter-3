@@ -77,7 +77,7 @@ void queensMenu()
 
     while (playAgain)
     {
-        int N = inputInteger("\n\tEnter the board dimension nxn : ", 4, 20);
+        int N = inputInteger("\n\tEnter the board dimension nxn : ", true);
         QueensGame game(N);
         int moveCount = 0;
 
